@@ -30,3 +30,14 @@ venv/
 
 # Node
 node_modules/
+
+# Không đưa lên GitHub: báo cáo/slide và script dựng, ghi chú nội bộ của nhóm.
+# Repo chỉ giữ mã nguồn ứng dụng + backend để nộp.
+bao_cao/
+docs/
+ai-engine/AGENT.md
+ai-engine/docs/
+video-engine/docs/
+VIDEO_GENERATOR.md
+video_engine_architecture.md
+YEU_CAU_DO_AN.md

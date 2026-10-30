@@ -3,9 +3,7 @@
 Ứng dụng di động theo dõi xu hướng công nghệ và trợ lý tìm hiểu mã nguồn mở.
 Đồ án môn **CMP177 – Lập trình trên thiết bị di động** · Lớp 23DTHD5.
 
-Đề xuất: [DE_XUAT_DE_TAI.md](DE_XUAT_DE_TAI.md) · Yêu cầu: [YEU_CAU_DO_AN.md](YEU_CAU_DO_AN.md) ·
-Báo cáo: [bao_cao/BAO_CAO_DO_AN_DEVRADAR_AI.docx](bao_cao/BAO_CAO_DO_AN_DEVRADAR_AI.docx) ·
-Slide: [bao_cao/SLIDE_DO_AN_DEVRADAR_AI.pptx](bao_cao/SLIDE_DO_AN_DEVRADAR_AI.pptx)
+Đề xuất đề tài: [DE_XUAT_DE_TAI.md](DE_XUAT_DE_TAI.md)
 
 ## Chạy nhanh (Windows)
 
@@ -76,14 +74,14 @@ Flutter App ──REST──▶ Backend (FastAPI, JWT, cron) ──▶ AI Engine
 | `mobile/` | App Flutter – xem [mobile/README.md](mobile/README.md) |
 | `backend/` | REST API FastAPI, SQLAlchemy, Alembic, APScheduler |
 | `ai-engine/` | Tóm tắt README + RAG (sentence-transformers, pgvector, Ollama) |
-| `video-engine/` | Dịch vụ tạo video (backend gọi qua `VIDEO_ENGINE_URL`) – [VIDEO_GENERATOR.md](VIDEO_GENERATOR.md) |
-| `bao_cao/` | Báo cáo, slide và script dựng lại (`tao_bao_cao/`, `tao_slide/`) |
+| `video-engine/` | Dịch vụ tạo video: giọng đọc Piper + FFmpeg (backend gọi qua `VIDEO_ENGINE_URL`) |
+| `backend/database/schema.sql` | Script tạo cơ sở dữ liệu (PostgreSQL + pgvector) |
 
 ## Kiểm thử
 
 ```bash
-cd mobile && flutter analyze && flutter test        # 147 test
-cd backend && pytest                                 # 276 test
+cd mobile && flutter analyze && flutter test        # 150 test
+cd backend && pytest                                 # 280 test
 cd ai-engine && pytest tests                         # 21 test
 cd video-engine && pytest                            # 38 test
 ```
