@@ -121,10 +121,14 @@ class _Result extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        GlassCard(
-          padding: const EdgeInsets.all(10),
-          borderRadius: 24,
-          child: AspectRatio(aspectRatio: 9 / 16, child: _VideoPreview(url: url)),
+        Expanded(
+          child: Center(
+            child: GlassCard(
+              padding: const EdgeInsets.all(10),
+              borderRadius: 24,
+              child: AspectRatio(aspectRatio: 9 / 16, child: _VideoPreview(url: url)),
+            ),
+          ),
         ),
         const SizedBox(height: 18),
         GlassButton(
