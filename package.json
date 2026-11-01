@@ -1,0 +1,12 @@
+{
+  "name": "dev-radar-ai",
+  "version": "2026.8.31",
+  "description": "Dev Radar AI - Autonomous Multi-Project Development System with AG-Kit",
+  "type": "module",
+  "scripts": {
+    "check:agents": "python .agents/scripts/validate_kit.py",
+    "check:antigravity": "node .agents/hooks/antigravity-doctor.mjs",
+    "test:antigravity": "node --test .agents/hooks/tests/antigravity.test.mjs"
+  },
+  "private": true
+}
