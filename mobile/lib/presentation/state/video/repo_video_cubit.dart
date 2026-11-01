@@ -31,7 +31,7 @@ class RepoVideoState extends Equatable {
   List<Object?> get props => [status, video, errorMessage];
 }
 
-/// Renders a detailed analysis video for a specific repo. Blocks server-side for 30-60s.
+/// Renders a detailed analysis video for a specific repo. Blocks server-side for 30-60s on render.
 class RepoVideoCubit extends Cubit<RepoVideoState> {
   final VideoRepository videoRepository;
   final int repoId;
@@ -41,11 +41,20 @@ class RepoVideoCubit extends Cubit<RepoVideoState> {
     required this.repoId,
   }) : super(const RepoVideoState());
 
-  Future<void> generate() async {
+  Future<void> generate({bool force = false}) async {
     if (state.status == LoadStatus.loading) return;
     emit(state.copyWith(status: LoadStatus.loading, errorMessage: () => null));
     try {
-      final video = await videoRepository.createRepoVideo(repoId);
+      if (!force) {
+        final existing = await videoRepository.getRepoVideo(repoId);
+        if (existing != null) {
+          if (isClosed) return;
+          emit(state.copyWith(status: LoadStatus.success, video: existing));
+          return;
+        }
+      }
+
+      final video = await videoRepository.createRepoVideo(repoId, force: force);
       if (isClosed) return;
       emit(state.copyWith(status: LoadStatus.success, video: video));
     } catch (e) {

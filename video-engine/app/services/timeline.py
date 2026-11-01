@@ -1,6 +1,8 @@
 import wave
 from pathlib import Path
 
+from app.core.config import settings
+
 GAP_SECONDS = 0.35
 MIN_SLIDE_SECONDS = 1.2
 
@@ -79,7 +81,8 @@ def ffmpeg_args(entries: list[tuple[Path, float]], audio_path: Path, out_path: P
         "-map", "[outv]",
         "-map", f"{len(entries)}:a",
         "-c:v", "libx264",
-        "-preset", "veryfast",
+        "-preset", settings.ffmpeg_preset,
+        "-threads", "0",
         "-crf", "23",
         "-pix_fmt", "yuv420p",
         "-c:a", "aac",

@@ -13,6 +13,7 @@ import '../../widgets/common/glass_page_scaffold.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_button.dart';
 import '../../widgets/glass/glass_card.dart';
+import '../../widgets/glass/glass_icon_button.dart';
 
 /// Renders the user's learning roadmap as a 9:16 video and offers it to the
 /// system share sheet. Launching this screen starts the render: the button that
@@ -101,11 +102,25 @@ class _Result extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        GlassButton(
-          text: 'Chia sẻ video',
-          icon: Icons.ios_share_rounded,
-          height: 56,
-          onPressed: () => _share(context),
+        Row(
+          children: [
+            Expanded(
+              child: GlassButton(
+                text: 'Chia sẻ video',
+                icon: Icons.ios_share_rounded,
+                height: 56,
+                onPressed: () => _share(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            GlassIconButton(
+              icon: Icons.refresh_rounded,
+              tooltip: 'Dựng lại video mới',
+              size: 56,
+              iconSize: 22,
+              onPressed: () => context.read<RoadmapVideoCubit>().generate(force: true),
+            ),
+          ],
         ),
       ],
     );

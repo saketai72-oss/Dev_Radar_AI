@@ -55,6 +55,8 @@ def test_ffmpeg_args_target_h264_aac_and_faststart():
     assert "concat=n=2:v=1:a=0" in fc
     
     assert "libx264" in args
+    assert "-preset" in args and args[args.index("-preset") + 1] == "ultrafast"
+    assert "-threads" in args and args[args.index("-threads") + 1] == "0"
     assert "aac" in args
     assert "-movflags" in args and args[args.index("-movflags") + 1] == "+faststart"
     assert "-shortest" in args
