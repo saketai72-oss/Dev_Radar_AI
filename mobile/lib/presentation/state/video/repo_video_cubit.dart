@@ -1,3 +1,4 @@
+import '../../../core/network/api_exceptions.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -59,6 +60,15 @@ class RepoVideoCubit extends Cubit<RepoVideoState> {
       emit(state.copyWith(status: LoadStatus.success, video: video));
     } catch (e) {
       if (isClosed) return;
+      if (e is TimeoutException || e.toString().toLowerCase().contains('timeout')) {
+        try {
+          final fallback = await videoRepository.getRepoVideo(repoId);
+          if (fallback != null) {
+            emit(state.copyWith(status: LoadStatus.success, video: fallback));
+            return;
+          }
+        } catch (_) {}
+      }
       emit(state.copyWith(status: LoadStatus.failure, errorMessage: () => e.toString()));
     }
   }
