@@ -1,8 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../widgets/video/dev_radar_video_player.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -11,9 +9,7 @@ import '../../state/load_status.dart';
 import '../../state/video/repo_video_cubit.dart';
 import '../../widgets/common/glass_page_scaffold.dart';
 import '../../widgets/common/state_views.dart';
-import '../../widgets/glass/glass_button.dart';
-import '../../widgets/glass/glass_card.dart';
-import '../../widgets/glass/glass_icon_button.dart';
+import '../../widgets/video/video_result_view.dart';
 
 /// Renders a detailed analysis video for a specific repository (9:16)
 /// and allows viewing and sharing it via the system share sheet.
@@ -120,50 +116,20 @@ class _Result extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: Center(
-            child: GlassCard(
-              padding: const EdgeInsets.all(10),
-              borderRadius: 24,
-              child: AspectRatio(aspectRatio: 9 / 16, child: DevRadarVideoPlayer(url: url)),
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        Row(
-          children: [
-            Expanded(
-              child: GlassButton(
-                text: 'Chia sẻ video',
-                icon: Icons.ios_share_rounded,
-                height: 56,
-                onPressed: () => _share(context),
-              ),
-            ),
-            const SizedBox(width: 12),
-            GlassIconButton(
-              icon: Icons.refresh_rounded,
-              tooltip: 'Dựng lại video mới',
-              size: 56,
-              iconSize: 22,
-              onPressed: () => context.read<RepoVideoCubit>().generate(force: true),
-            ),
-          ],
-        ),
-      ],
+    return VideoResultView(
+      url: url,
+      onRegenerate: () => context.read<RepoVideoCubit>().generate(force: true),
+      onShare: _share,
     );
   }
 
-  Future<void> _share(BuildContext context) async {
-    final box = context.findRenderObject() as RenderBox?;
+  Future<void> _share(BuildContext buttonContext) async {
     await SharePlus.instance.share(
       ShareParams(
         title: 'Video phân tích $repoName',
         text: 'Xem video phân tích chi tiết repository $repoFullName trên Dev Radar AI!',
         uri: Uri.parse(url),
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+        sharePositionOrigin: sharePositionOf(buttonContext),
       ),
     );
   }
