@@ -9,6 +9,7 @@ import '../../state/search/search_bloc.dart';
 import '../../state/search/search_event.dart';
 import '../../state/search/search_state.dart';
 import '../../widgets/common/fade_slide_in.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_container.dart';
 import '../../widgets/glass/glass_modal_sheet.dart';
@@ -126,7 +127,7 @@ class _SearchViewState extends State<_SearchView> {
               onNotification: _onScrollNotification,
               child: BlocBuilder<SearchBloc, SearchState>(
                 builder: (context, state) =>
-                    AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: _buildBody(state, isDark)),
+                    SafeAnimatedSwitcher(duration: const Duration(milliseconds: 220), child: _buildBody(state, isDark)),
               ),
             ),
           ),

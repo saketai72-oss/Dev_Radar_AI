@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../common/safe_animated_switcher.dart';
 
 /// Animated Morphing Icon inspired by Morphicons principles.
 /// Executes smooth rotational and scaling vector transitions between active & inactive icon states.
@@ -32,7 +33,7 @@ class MorphIcon extends StatelessWidget {
         (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary);
     final defaultToggledColor = toggledColor ?? AppColors.primary;
 
-    return AnimatedSwitcher(
+    return SafeAnimatedSwitcher(
       duration: duration,
       transitionBuilder: (child, animation) {
         return RotationTransition(

@@ -8,6 +8,7 @@ import '../../../data/models/notification_model.dart';
 import '../../../data/repositories/notification_repository.dart';
 import '../../state/notifications/notifications_cubit.dart';
 import '../../widgets/common/glass_page_scaffold.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_card.dart';
 
@@ -47,7 +48,7 @@ class _NotificationsView extends StatelessWidget {
                 label: const Text('Đọc hết'),
               ),
           ],
-          body: AnimatedSwitcher(
+          body: SafeAnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _buildBody(context, state, cubit),
           ),

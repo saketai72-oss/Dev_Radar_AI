@@ -9,6 +9,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/preferences_repository.dart';
 import '../../state/onboarding/onboarding_cubit.dart';
 import '../../widgets/common/glass_page_scaffold.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_button.dart';
 import '../../widgets/glass/glass_card.dart';
@@ -75,7 +76,7 @@ class _OnboardingView extends StatelessWidget {
             if (!isEditing)
               TextButton(onPressed: state.isSaving ? null : cubit.skip, child: const Text('Bỏ qua')),
           ],
-          body: AnimatedSwitcher(
+          body: SafeAnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: switch (state.status) {
               OnboardingStatus.initial || OnboardingStatus.loading => const SkeletonList(

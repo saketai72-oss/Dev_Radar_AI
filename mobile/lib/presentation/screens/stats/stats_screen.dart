@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/stats_model.dart';
 import '../../../data/repositories/stats_repository.dart';
 import '../../state/stats/stats_cubit.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_card.dart';
 
@@ -89,7 +90,7 @@ class _StatsView extends StatelessWidget {
               ),
             );
           }
-          return AnimatedSwitcher(duration: const Duration(milliseconds: 300), child: body);
+          return SafeAnimatedSwitcher(duration: const Duration(milliseconds: 300), child: body);
         },
       ),
     );

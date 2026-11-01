@@ -8,6 +8,7 @@ import '../../../data/repositories/collection_repository.dart';
 import '../../state/collections/collection_detail_cubit.dart';
 import '../../state/load_status.dart';
 import '../../widgets/common/ambient_background.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_container.dart';
 import 'widgets/collection_widgets.dart';
@@ -115,7 +116,7 @@ class _CollectionDetailView extends StatelessWidget {
             ),
             body: AmbientBackground(
               child: SafeArea(
-                child: AnimatedSwitcher(
+                child: SafeAnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: _buildBody(context, state),
                 ),

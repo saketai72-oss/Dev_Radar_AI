@@ -17,6 +17,7 @@ import '../../../data/repositories/watchlist_repository.dart';
 import '../../state/detail/repo_detail_cubit.dart';
 import '../../state/detail/repo_detail_state.dart';
 import '../../widgets/common/ambient_background.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_badge.dart';
 import '../../widgets/glass/glass_button.dart';
@@ -199,7 +200,7 @@ class _RepoDetailViewState extends State<_RepoDetailView> {
             const SizedBox(height: 16),
             _SectionTabs(selected: _section, onChanged: (s) => setState(() => _section = s)),
             const SizedBox(height: 14),
-            AnimatedSwitcher(
+            SafeAnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
@@ -584,7 +585,7 @@ class _ActionButton extends StatelessWidget {
       glowColor: AppColors.primary.withAlpha(40),
       child: Column(
         children: [
-          AnimatedSwitcher(
+          SafeAnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
             child: busy

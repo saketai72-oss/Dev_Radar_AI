@@ -15,6 +15,7 @@ import '../../state/collections/collections_cubit.dart';
 import '../../state/learning/learning_cubit.dart';
 import '../../state/load_status.dart';
 import '../../state/notes/notes_cubit.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_card.dart';
 import '../../widgets/glass/glass_icon_button.dart';
@@ -91,7 +92,7 @@ class _CollectionsScreenState extends State<CollectionsScreen> {
                 ),
               ),
               Expanded(
-                child: AnimatedSwitcher(
+                child: SafeAnimatedSwitcher(
                   duration: const Duration(milliseconds: 280),
                   switchInCurve: Curves.easeOutCubic,
                   transitionBuilder: (child, animation) => FadeTransition(

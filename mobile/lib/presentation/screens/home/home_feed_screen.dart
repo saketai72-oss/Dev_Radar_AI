@@ -10,6 +10,7 @@ import '../../state/feed/feed_bloc.dart';
 import '../../state/feed/feed_event.dart';
 import '../../state/feed/feed_state.dart';
 import '../../widgets/common/fade_slide_in.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/icons/github_logo.dart';
 import '../../widgets/repo_card.dart';
@@ -114,7 +115,7 @@ class _HomeFeedViewState extends State<_HomeFeedView> {
                   );
                 },
                 builder: (context, state) {
-                  return AnimatedSwitcher(
+                  return SafeAnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     child: _buildBody(context, state),
                   );

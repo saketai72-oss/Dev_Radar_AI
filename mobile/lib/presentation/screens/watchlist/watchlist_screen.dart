@@ -8,6 +8,7 @@ import '../../../data/models/watchlist_item_model.dart';
 import '../../../data/repositories/watchlist_repository.dart';
 import '../../state/watchlist/watchlist_cubit.dart';
 import '../../widgets/common/glass_page_scaffold.dart';
+import '../../widgets/common/safe_animated_switcher.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/glass/glass_card.dart';
 
@@ -39,7 +40,7 @@ class _WatchlistView extends StatelessWidget {
         return GlassPageScaffold(
           title: 'Repo đang theo dõi',
           subtitle: 'Nhận thông báo khi có phiên bản mới',
-          body: AnimatedSwitcher(
+          body: SafeAnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _buildBody(context, state, cubit),
           ),
