@@ -24,9 +24,9 @@ void main() {
   RoadmapVideoCubit build() => RoadmapVideoCubit(videoRepository: videos);
 
   blocTest<RoadmapVideoCubit, RoadmapVideoState>(
-    'generate renders and exposes the video',
+    'generate with cached video returns instant replay without calling createRoadmapVideo',
     build: () {
-      when(() => videos.createRoadmapVideo()).thenAnswer((_) async => video);
+      when(() => videos.getRoadmapVideo()).thenAnswer((_) async => video);
       return build();
     },
     act: (cubit) => cubit.generate(),
@@ -34,13 +34,49 @@ void main() {
       expect(cubit.state.status, LoadStatus.success);
       expect(cubit.state.video, video);
       expect(cubit.state.errorMessage, isNull);
+      verify(() => videos.getRoadmapVideo()).called(1);
+      verifyNever(() => videos.createRoadmapVideo(force: any(named: 'force')));
+    },
+  );
+
+  blocTest<RoadmapVideoCubit, RoadmapVideoState>(
+    'generate with cache miss calls createRoadmapVideo with force: false',
+    build: () {
+      when(() => videos.getRoadmapVideo()).thenAnswer((_) async => null);
+      when(() => videos.createRoadmapVideo(force: false)).thenAnswer((_) async => video);
+      return build();
+    },
+    act: (cubit) => cubit.generate(),
+    verify: (cubit) {
+      expect(cubit.state.status, LoadStatus.success);
+      expect(cubit.state.video, video);
+      expect(cubit.state.errorMessage, isNull);
+      verify(() => videos.getRoadmapVideo()).called(1);
+      verify(() => videos.createRoadmapVideo(force: false)).called(1);
+    },
+  );
+
+  blocTest<RoadmapVideoCubit, RoadmapVideoState>(
+    'generate with force: true skips cache check and calls createRoadmapVideo with force: true',
+    build: () {
+      when(() => videos.createRoadmapVideo(force: true)).thenAnswer((_) async => video);
+      return build();
+    },
+    act: (cubit) => cubit.generate(force: true),
+    verify: (cubit) {
+      expect(cubit.state.status, LoadStatus.success);
+      expect(cubit.state.video, video);
+      expect(cubit.state.errorMessage, isNull);
+      verifyNever(() => videos.getRoadmapVideo());
+      verify(() => videos.createRoadmapVideo(force: true)).called(1);
     },
   );
 
   blocTest<RoadmapVideoCubit, RoadmapVideoState>(
     'generate reports a failure, e.g. an empty roadmap',
     build: () {
-      when(() => videos.createRoadmapVideo())
+      when(() => videos.getRoadmapVideo()).thenAnswer((_) async => null);
+      when(() => videos.createRoadmapVideo(force: false))
           .thenThrow(ApiException('Lộ trình còn trống, chưa thể tạo video', statusCode: 400));
       return build();
     },
@@ -54,7 +90,7 @@ void main() {
   blocTest<RoadmapVideoCubit, RoadmapVideoState>(
     'a second tap while rendering does not queue another render',
     build: () {
-      when(() => videos.createRoadmapVideo()).thenAnswer((_) async => video);
+      when(() => videos.getRoadmapVideo()).thenAnswer((_) async => video);
       return build();
     },
     act: (cubit) async {
@@ -62,7 +98,7 @@ void main() {
       await cubit.generate(); // still loading -> must be a no-op
       await first;
     },
-    verify: (_) => verify(() => videos.createRoadmapVideo()).called(1),
+    verify: (_) => verify(() => videos.getRoadmapVideo()).called(1),
   );
 
   test('initial state is idle with no video', () {

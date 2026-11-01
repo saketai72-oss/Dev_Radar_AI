@@ -90,6 +90,7 @@ def test_post_roadmap_renders_and_returns_a_relative_url(client, auth_headers, d
 
     saved = db.query(GeneratedVideo).filter_by(job_id=body["job_id"]).one()
     assert saved.duration_seconds == pytest.approx(12.4)
+    assert saved.video_type == "roadmap"
 
 
 def test_post_roadmap_requires_auth(client, roadmap, engine):
@@ -196,6 +197,8 @@ def test_post_repo_video_renders_and_returns_relative_url(client, auth_headers, 
 
     saved = db.query(GeneratedVideo).filter_by(job_id=body["job_id"]).one()
     assert saved.duration_seconds == pytest.approx(12.4)
+    assert saved.video_type == "repo"
+    assert saved.repo_id == repo.id
 
 
 def test_post_repo_video_requires_auth(client, engine):
@@ -212,10 +215,264 @@ def test_video_specs_normalize_brand_phonetics():
     assert normalize_narration("Khám phá trên Dev Radar AI") == "Khám phá trên đép ra đa ây ai"
     assert normalize_narration("Chào mừng đến với Dev Radar") == "Chào mừng đến với đép ra đa ây ai"
 
-    repo = Repo(github_id=1, full_name="user/tool", name="tool", stars=10)
+    repo = Repo(github_id=1, full_name="user/tool", owner="user", name="tool", html_url="https://github.com/user/tool", stars=10)
     spec = build_repo_video_spec("job1", repo)
     assert "đép ra đa ây ai" in spec["slides"][0]["narration"]
     assert "đép ra đa ây ai" in spec["slides"][-1]["narration"]
     assert spec["slides"][-1]["title"] == "Khám phá trên Dev Radar AI"
 
 
+# --- Caching tests ---
+
+def test_get_roadmap_video_requires_auth(client):
+    assert client.get(f"{URL}/roadmap").status_code == 401
+
+
+def test_get_roadmap_video_404_when_no_video(client, auth_headers):
+    assert_error(client.get(f"{URL}/roadmap", headers=auth_headers), 404, "NOT_FOUND")
+
+
+def test_get_roadmap_video_404_when_file_missing_on_disk(client, auth_headers, db, user):
+    video = GeneratedVideo(
+        job_id="job_missing_file",
+        user_id=user.id,
+        video_type="roadmap",
+        duration_seconds=10.0,
+        size_bytes=500,
+    )
+    db.add(video)
+    db.commit()
+
+    assert_error(client.get(f"{URL}/roadmap", headers=auth_headers), 404, "NOT_FOUND")
+
+
+def test_get_roadmap_video_200_when_cached(client, auth_headers, db, user, video_dir):
+    job_id = "cached_roadmap_job"
+    (video_dir / f"{job_id}.mp4").write_bytes(b"cached video")
+    video = GeneratedVideo(
+        job_id=job_id,
+        user_id=user.id,
+        video_type="roadmap",
+        duration_seconds=15.0,
+        size_bytes=2048,
+    )
+    db.add(video)
+    db.commit()
+
+    response = client.get(f"{URL}/roadmap", headers=auth_headers)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["job_id"] == job_id
+    assert body["url"] == f"{URL}/{job_id}"
+    assert body["duration_seconds"] == 15.0
+    assert body["size_bytes"] == 2048
+
+
+def test_post_roadmap_returns_cached_when_not_force(client, auth_headers, db, user, video_dir, engine):
+    job_id = "cached_job_123"
+    (video_dir / f"{job_id}.mp4").write_bytes(b"cached video")
+    db.add(
+        GeneratedVideo(
+            job_id=job_id,
+            user_id=user.id,
+            video_type="roadmap",
+            duration_seconds=12.0,
+            size_bytes=1000,
+        )
+    )
+    db.commit()
+
+    called = False
+
+    def fail_handler(request: httpx.Request) -> httpx.Response:
+        nonlocal called
+        called = True
+        return httpx.Response(500)
+
+    engine(fail_handler)
+
+    # force defaults to False: returns cached video without calling engine
+    res = client.post(f"{URL}/roadmap", headers=auth_headers)
+    assert res.status_code == 200
+    assert res.json()["job_id"] == job_id
+    assert not called
+
+    # explicit force=False
+    res2 = client.post(f"{URL}/roadmap?force=false", headers=auth_headers)
+    assert res2.status_code == 200
+    assert res2.json()["job_id"] == job_id
+    assert not called
+
+
+def test_post_roadmap_force_true_rerenders(client, auth_headers, db, user, roadmap, video_dir, engine):
+    job_id = "old_cached_job"
+    (video_dir / f"{job_id}.mp4").write_bytes(b"old cached video")
+    db.add(
+        GeneratedVideo(
+            job_id=job_id,
+            user_id=user.id,
+            video_type="roadmap",
+            duration_seconds=12.0,
+            size_bytes=1000,
+        )
+    )
+    db.commit()
+
+    engine(rendered)
+
+    res = client.post(f"{URL}/roadmap?force=true", headers=auth_headers)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["job_id"] != job_id
+    assert body["job_id"] is not None
+
+
+def test_get_repo_video_requires_auth(client):
+    assert client.get(f"{URL}/repos/1").status_code == 401
+
+
+def test_get_repo_video_404_when_no_video(client, auth_headers):
+    assert_error(client.get(f"{URL}/repos/999", headers=auth_headers), 404, "NOT_FOUND")
+
+
+def test_get_repo_video_404_when_file_missing_on_disk(client, auth_headers, db, user):
+    repo = Repo(
+        github_id=4444,
+        full_name="org/file-missing",
+        owner="org",
+        name="file-missing",
+        html_url="https://github.com/org/file-missing",
+        stars=1,
+    )
+    db.add(repo)
+    db.commit()
+
+    job_id = "repo_video_no_file"
+    db.add(
+        GeneratedVideo(
+            job_id=job_id,
+            user_id=user.id,
+            video_type="repo",
+            repo_id=repo.id,
+            duration_seconds=10.0,
+            size_bytes=500,
+        )
+    )
+    db.commit()
+
+    assert_error(client.get(f"{URL}/repos/{repo.id}", headers=auth_headers), 404, "NOT_FOUND")
+
+
+def test_get_repo_video_200_when_cached(client, auth_headers, db, user, video_dir):
+    repo = Repo(
+        github_id=5555,
+        full_name="org/test",
+        owner="org",
+        name="test",
+        html_url="https://github.com/org/test",
+        stars=10,
+    )
+    db.add(repo)
+    db.commit()
+
+    job_id = "cached_repo_job"
+    (video_dir / f"{job_id}.mp4").write_bytes(b"cached repo video")
+    db.add(
+        GeneratedVideo(
+            job_id=job_id,
+            user_id=user.id,
+            video_type="repo",
+            repo_id=repo.id,
+            duration_seconds=18.5,
+            size_bytes=4096,
+        )
+    )
+    db.commit()
+
+    response = client.get(f"{URL}/repos/{repo.id}", headers=auth_headers)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["job_id"] == job_id
+    assert body["url"] == f"{URL}/{job_id}"
+    assert body["duration_seconds"] == 18.5
+    assert body["size_bytes"] == 4096
+
+
+def test_post_repo_video_returns_cached_when_not_force(client, auth_headers, db, user, video_dir, engine):
+    repo = Repo(
+        github_id=6666,
+        full_name="org/cache-test",
+        owner="org",
+        name="cache-test",
+        html_url="https://github.com/org/cache-test",
+        stars=50,
+    )
+    db.add(repo)
+    db.commit()
+
+    job_id = "cached_repo_video_job"
+    (video_dir / f"{job_id}.mp4").write_bytes(b"cached video")
+    db.add(
+        GeneratedVideo(
+            job_id=job_id,
+            user_id=user.id,
+            video_type="repo",
+            repo_id=repo.id,
+            duration_seconds=20.0,
+            size_bytes=5000,
+        )
+    )
+    db.commit()
+
+    called = False
+
+    def fail_handler(request: httpx.Request) -> httpx.Response:
+        nonlocal called
+        called = True
+        return httpx.Response(500)
+
+    engine(fail_handler)
+
+    res = client.post(f"{URL}/repos/{repo.id}", headers=auth_headers)
+    assert res.status_code == 200
+    assert res.json()["job_id"] == job_id
+    assert not called
+
+    res2 = client.post(f"{URL}/repos/{repo.id}?force=false", headers=auth_headers)
+    assert res2.status_code == 200
+    assert res2.json()["job_id"] == job_id
+    assert not called
+
+
+def test_post_repo_video_force_true_rerenders(client, auth_headers, db, user, video_dir, engine):
+    repo = Repo(
+        github_id=7777,
+        full_name="org/force-test",
+        owner="org",
+        name="force-test",
+        html_url="https://github.com/org/force-test",
+        stars=100,
+    )
+    db.add(repo)
+    db.commit()
+
+    job_id = "old_repo_job"
+    (video_dir / f"{job_id}.mp4").write_bytes(b"old video")
+    db.add(
+        GeneratedVideo(
+            job_id=job_id,
+            user_id=user.id,
+            video_type="repo",
+            repo_id=repo.id,
+            duration_seconds=20.0,
+            size_bytes=5000,
+        )
+    )
+    db.commit()
+
+    engine(rendered)
+
+    res = client.post(f"{URL}/repos/{repo.id}?force=true", headers=auth_headers)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["job_id"] != job_id

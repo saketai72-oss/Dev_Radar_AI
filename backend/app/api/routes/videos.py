@@ -33,12 +33,61 @@ NOT_FOUND_MESSAGE = "Không tìm thấy video"
 MISSING_FILE_MESSAGE = "Không đọc được video vừa tạo, vui lòng thử lại sau"
 
 
+@router.get("/roadmap", response_model=RoadmapVideoOut)
+def get_roadmap_video(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the caller's cached roadmap video if it exists on disk."""
+    stmt = (
+        select(GeneratedVideo)
+        .where(
+            GeneratedVideo.user_id == current_user.id,
+            GeneratedVideo.video_type == "roadmap",
+        )
+        .order_by(GeneratedVideo.created_at.desc())
+    )
+    video = db.scalars(stmt).first()
+    if video is None:
+        raise AppError(404, ErrorCode.NOT_FOUND, NOT_FOUND_MESSAGE)
+
+    path = Path(settings.video_output_dir) / f"{video.job_id}.mp4"
+    if not path.is_file():
+        raise AppError(404, ErrorCode.NOT_FOUND, NOT_FOUND_MESSAGE)
+
+    return RoadmapVideoOut(
+        job_id=video.job_id,
+        url=f"/api/v1/videos/{video.job_id}",
+        duration_seconds=video.duration_seconds,
+        size_bytes=video.size_bytes,
+    )
+
+
 @router.post("/roadmap", response_model=RoadmapVideoOut)
 def create_roadmap_video(
+    force: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Render a summary video of the caller's learning roadmap. Blocks for 30s-1min."""
+    if not force:
+        stmt = (
+            select(GeneratedVideo)
+            .where(
+                GeneratedVideo.user_id == current_user.id,
+                GeneratedVideo.video_type == "roadmap",
+            )
+            .order_by(GeneratedVideo.created_at.desc())
+        )
+        cached = db.scalars(stmt).first()
+        if cached and (Path(settings.video_output_dir) / f"{cached.job_id}.mp4").is_file():
+            return RoadmapVideoOut(
+                job_id=cached.job_id,
+                url=f"/api/v1/videos/{cached.job_id}",
+                duration_seconds=cached.duration_seconds,
+                size_bytes=cached.size_bytes,
+            )
+
     rows = list(db.scalars(select(UserRepo).where(UserRepo.user_id == current_user.id)))
     job_id = uuid4().hex
 
@@ -59,6 +108,7 @@ def create_roadmap_video(
         GeneratedVideo(
             job_id=job_id,
             user_id=current_user.id,
+            video_type="roadmap",
             duration_seconds=result["duration_seconds"],
             size_bytes=result["size_bytes"],
         )
@@ -73,9 +123,41 @@ def create_roadmap_video(
     )
 
 
+@router.get("/repos/{repo_id}", response_model=RoadmapVideoOut)
+def get_repo_video(
+    repo_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the cached repo video if it exists on disk."""
+    stmt = (
+        select(GeneratedVideo)
+        .where(
+            GeneratedVideo.repo_id == repo_id,
+            GeneratedVideo.video_type == "repo",
+        )
+        .order_by(GeneratedVideo.created_at.desc())
+    )
+    video = db.scalars(stmt).first()
+    if video is None:
+        raise AppError(404, ErrorCode.NOT_FOUND, NOT_FOUND_MESSAGE)
+
+    path = Path(settings.video_output_dir) / f"{video.job_id}.mp4"
+    if not path.is_file():
+        raise AppError(404, ErrorCode.NOT_FOUND, NOT_FOUND_MESSAGE)
+
+    return RoadmapVideoOut(
+        job_id=video.job_id,
+        url=f"/api/v1/videos/{video.job_id}",
+        duration_seconds=video.duration_seconds,
+        size_bytes=video.size_bytes,
+    )
+
+
 @router.post("/repos/{repo_id}", response_model=RoadmapVideoOut)
 def create_repo_video(
     repo_id: int,
+    force: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -83,6 +165,24 @@ def create_repo_video(
     repo = db.get(Repo, repo_id)
     if repo is None:
         raise AppError(404, ErrorCode.NOT_FOUND, "Không tìm thấy repository")
+
+    if not force:
+        stmt = (
+            select(GeneratedVideo)
+            .where(
+                GeneratedVideo.repo_id == repo_id,
+                GeneratedVideo.video_type == "repo",
+            )
+            .order_by(GeneratedVideo.created_at.desc())
+        )
+        cached = db.scalars(stmt).first()
+        if cached and (Path(settings.video_output_dir) / f"{cached.job_id}.mp4").is_file():
+            return RoadmapVideoOut(
+                job_id=cached.job_id,
+                url=f"/api/v1/videos/{cached.job_id}",
+                duration_seconds=cached.duration_seconds,
+                size_bytes=cached.size_bytes,
+            )
 
     summary_text = None
     quickstart_text = None
@@ -111,6 +211,8 @@ def create_repo_video(
         GeneratedVideo(
             job_id=job_id,
             user_id=current_user.id,
+            video_type="repo",
+            repo_id=repo_id,
             duration_seconds=result["duration_seconds"],
             size_bytes=result["size_bytes"],
         )

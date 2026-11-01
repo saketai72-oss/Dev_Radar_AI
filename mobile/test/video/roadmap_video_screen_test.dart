@@ -22,8 +22,10 @@ void main() {
       );
 
   testWidgets('shows the render in progress with an honest wait time', (tester) async {
+    when(() => videos.getRoadmapVideo()).thenAnswer((_) async => null);
     // Never completes: the screen stays in its loading state.
-    when(() => videos.createRoadmapVideo()).thenAnswer((_) => Completer<RoadmapVideoModel>().future);
+    when(() => videos.createRoadmapVideo(force: any(named: 'force')))
+        .thenAnswer((_) => Completer<RoadmapVideoModel>().future);
 
     await tester.pumpWidget(app());
     await tester.pump();
@@ -34,7 +36,8 @@ void main() {
   });
 
   testWidgets('shows the backend message and a retry button on failure', (tester) async {
-    when(() => videos.createRoadmapVideo())
+    when(() => videos.getRoadmapVideo()).thenAnswer((_) async => null);
+    when(() => videos.createRoadmapVideo(force: any(named: 'force')))
         .thenThrow(ApiException('Lộ trình còn trống, chưa thể tạo video', statusCode: 400));
 
     await tester.pumpWidget(app());

@@ -98,3 +98,9 @@ class GeneratedVideo(Base):
     duration_seconds: Mapped[float] = mapped_column(Float)
     size_bytes: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    video_type: Mapped[str] = mapped_column(String(32), default="roadmap", index=True)
+    repo_id: Mapped[int | None] = mapped_column(
+        ForeignKey("repos.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+
+    repo: Mapped["Repo | None"] = relationship()

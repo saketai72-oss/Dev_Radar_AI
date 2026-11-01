@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.models import GeneratedVideo
+from app.models import GeneratedVideo, Repo
 
 
 def test_row_persists_with_defaults(db, user):
@@ -22,6 +22,8 @@ def test_row_persists_with_defaults(db, user):
     assert saved.duration_seconds == pytest.approx(12.4)
     assert saved.size_bytes == 1024
     assert saved.created_at is not None
+    assert saved.video_type == "roadmap"
+    assert saved.repo_id is None
 
 
 def test_job_id_is_unique(db, user):
@@ -49,3 +51,37 @@ def test_deleting_the_user_deletes_the_video(db, user):
     db.commit()
 
     assert db.scalars(select(GeneratedVideo)).all() == []
+
+
+def test_generated_video_with_repo_and_type(db, user):
+    repo = Repo(
+        github_id=8888,
+        full_name="org/repo-model-test",
+        owner="org",
+        name="repo-model-test",
+        html_url="https://github.com/org/repo-model-test",
+        stars=5,
+    )
+    db.add(repo)
+    db.commit()
+
+    video = GeneratedVideo(
+        job_id="repo_video_model",
+        user_id=user.id,
+        video_type="repo",
+        repo_id=repo.id,
+        duration_seconds=10.0,
+        size_bytes=2048,
+    )
+    db.add(video)
+    db.commit()
+
+    saved = db.scalars(select(GeneratedVideo).where(GeneratedVideo.job_id == "repo_video_model")).one()
+    assert saved.video_type == "repo"
+    assert saved.repo_id == repo.id
+    assert saved.repo.name == "repo-model-test"
+
+    # Cascade delete repo deletes video
+    db.delete(repo)
+    db.commit()
+    assert db.scalars(select(GeneratedVideo).where(GeneratedVideo.job_id == "repo_video_model")).all() == []

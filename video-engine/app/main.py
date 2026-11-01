@@ -6,7 +6,20 @@ from anyio import to_thread
 from app.schemas.spec import VideoSpec, RenderResult
 from app.services.render import render_job
 
-app = FastAPI()
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    def _warmup():
+        try:
+            from app.services.tts import synthesize
+            synthesize('DevRadar', settings.voice, settings.cache_dir)
+        except Exception:
+            pass
+    await to_thread.run_sync(_warmup)
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get('/health')
 def health():
