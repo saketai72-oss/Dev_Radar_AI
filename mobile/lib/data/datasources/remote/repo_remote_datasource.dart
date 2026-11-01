@@ -89,6 +89,7 @@ class RepoRemoteDataSourceImpl implements RepoRemoteDataSource {
     final response = await apiClient.post(
       '${ApiConstants.repos}/$id/summary',
       options: Options(
+        connectTimeout: ApiConstants.slowRequestTimeout,
         sendTimeout: ApiConstants.slowRequestTimeout,
         receiveTimeout: ApiConstants.slowRequestTimeout,
       ),

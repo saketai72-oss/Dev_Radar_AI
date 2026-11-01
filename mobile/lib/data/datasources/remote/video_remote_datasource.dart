@@ -60,6 +60,7 @@ class VideoRemoteDataSourceImpl implements VideoRemoteDataSource {
       queryParameters: {'force': force},
       // A render takes 30-60s, far past the client's 30s default.
       options: Options(
+        connectTimeout: ApiConstants.slowRequestTimeout,
         sendTimeout: ApiConstants.slowRequestTimeout,
         receiveTimeout: ApiConstants.slowRequestTimeout,
       ),
@@ -73,6 +74,7 @@ class VideoRemoteDataSourceImpl implements VideoRemoteDataSource {
       '${ApiConstants.videos}/repos/$repoId',
       queryParameters: {'force': force},
       options: Options(
+        connectTimeout: ApiConstants.slowRequestTimeout,
         sendTimeout: ApiConstants.slowRequestTimeout,
         receiveTimeout: ApiConstants.slowRequestTimeout,
       ),

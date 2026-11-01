@@ -1,5 +1,6 @@
 import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -9,6 +10,10 @@ from app.services.layout import render_slide_png, CANVAS
 from app.services.tts import synthesize, wav_duration
 from app.services.timeline import slide_durations, concat_wavs, ffmpeg_args, GAP_SECONDS
 
+def _synth_slide(slide):
+    path = synthesize(slide.narration, settings.voice, settings.cache_dir)
+    return path, wav_duration(path)
+
 def render_job(spec: VideoSpec, out_dir: Path) -> RenderResult:
     size = CANVAS[spec.quality]
 
@@ -17,12 +22,12 @@ def render_job(spec: VideoSpec, out_dir: Path) -> RenderResult:
     with TemporaryDirectory(dir=out_dir) as tmp_str:
         tmp = Path(tmp_str)
         
-        audio_paths = []
-        raw_audio_seconds = []
-        for slide in spec.slides:
-            audio_path = synthesize(slide.narration, settings.voice, settings.cache_dir)
-            audio_paths.append(audio_path)
-            raw_audio_seconds.append(wav_duration(audio_path))
+        workers = min(len(spec.slides), 4) if spec.slides else 1
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            audio_results = list(pool.map(_synth_slide, spec.slides))
+            
+        audio_paths = [r[0] for r in audio_results]
+        raw_audio_seconds = [r[1] for r in audio_results]
             
         durations = slide_durations(raw_audio_seconds)
         
